@@ -1,0 +1,36 @@
+name: Deploy C++ WebAssembly App to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Emscripten SDK
+        uses: mymindstorm/setup-emsdk@v13
+        with:
+          version: 'latest'
+
+      - name: Compile C++ Code
+        run: |
+          emcc main.cpp -o app.js \
+            -s WASM=1 \
+            -s USE_SDL=2 \
+            -s EXPORTED_FUNCTIONS="['_main', '_cpp_interact']" \
+            -s EXTRA_EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap']"
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
